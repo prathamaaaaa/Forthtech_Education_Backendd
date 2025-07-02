@@ -205,11 +205,76 @@ router.post('/remove-request', async (req, res) => {
 
 
 
+// router.post('/accept-request', async (req, res) => {
+
+//   const { fromId, toId } = req.body;
+//   const io = req.app.get('io');
+//   const onlineUsers = req.app.get('onlineUsersMap'); 
+// console.log("Accept ddddddddddddrequest:", { fromId, toId, onlineUsers });
+//   try {
+//     const sender = await User.findById(fromId);
+//     const receiver = await User.findById(toId);
+
+//     if (!sender || !receiver) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     // Clean up request lists
+//     sender.requestList = sender.requestList.filter(req => req.user.toString() !== toId);
+//     receiver.requestList = receiver.requestList.filter(req => req.user.toString() !== fromId);
+
+//     // Follow each other
+//     if (!receiver.followList.includes(fromId)) receiver.followList.push(fromId);
+//     if (!sender.followList.includes(toId)) sender.followList.push(toId);
+
+//     await sender.save();
+//     await receiver.save();
+
+//     // ✅ Get socket IDs
+//     const senderSocketId = onlineUsers.get(fromId);
+//     const receiverSocketId = onlineUsers.get(toId);
+
+//     const messageForSender = {
+//       fromId: toId,
+//       toId: fromId,
+//       type: "system",
+//       message: `You are now connectedddddddddddd with ${receiver.firstName} ${receiver.lastName}`,
+//       timestamp: new Date().toISOString()
+//     };
+
+//     const messageForReceiver = {
+//       fromId: fromId,
+//       toId: toId,
+//       type: "system",
+//       message: `You are now connectdddddddddddddddddded with ${sender.firstName} ${sender.lastName}`,
+//       timestamp: new Date().toISOString()
+//     };
+
+//     if (senderSocketId) io.to(senderSocketId).emit("system-message", messageForSender);
+//     if (receiverSocketId) io.to(receiverSocketId).emit("system-message", messageForReceiver);
+//     console.log("✅ System messages sent to both users");
+//     res.status(200).json({ message: 'Request accepted' });
+//   } catch (error) {
+//     console.error("Accept request error:", error);
+//     res.status(500).json({ error: 'Server error accepting request' });
+//   }
+// });
+
+//
+//  POST /api/messages/delete-multiple
+
 router.post('/accept-request', async (req, res) => {
   const { fromId, toId } = req.body;
   const io = req.app.get('io');
   const onlineUsers = req.app.get('onlineUsersMap'); 
-console.log("Accept ddddddddddddrequest:", { fromId, toId, onlineUsers });
+
+  console.log("🚀 Accept request:", { fromId, toId });
+
+  // 🔍 Validate ObjectIds first
+  if (!mongoose.Types.ObjectId.isValid(fromId) || !mongoose.Types.ObjectId.isValid(toId)) {
+    return res.status(400).json({ error: 'Invalid user IDs' });
+  }
+
   try {
     const sender = await User.findById(fromId);
     const receiver = await User.findById(toId);
@@ -218,18 +283,18 @@ console.log("Accept ddddddddddddrequest:", { fromId, toId, onlineUsers });
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Clean up request lists
+    // 🚮 Clean up request lists
     sender.requestList = sender.requestList.filter(req => req.user.toString() !== toId);
     receiver.requestList = receiver.requestList.filter(req => req.user.toString() !== fromId);
 
-    // Follow each other
+    // 👥 Follow each other if not already
     if (!receiver.followList.includes(fromId)) receiver.followList.push(fromId);
     if (!sender.followList.includes(toId)) sender.followList.push(toId);
 
     await sender.save();
     await receiver.save();
 
-    // ✅ Get socket IDs
+    // ✅ Notify via socket.io
     const senderSocketId = onlineUsers.get(fromId);
     const receiverSocketId = onlineUsers.get(toId);
 
@@ -237,7 +302,7 @@ console.log("Accept ddddddddddddrequest:", { fromId, toId, onlineUsers });
       fromId: toId,
       toId: fromId,
       type: "system",
-      message: `You are now connectedddddddddddd with ${receiver.firstName} ${receiver.lastName}`,
+      message: `You are now connected with ${receiver.firstName} ${receiver.lastName}`,
       timestamp: new Date().toISOString()
     };
 
@@ -245,21 +310,24 @@ console.log("Accept ddddddddddddrequest:", { fromId, toId, onlineUsers });
       fromId: fromId,
       toId: toId,
       type: "system",
-      message: `You are now connectdddddddddddddddddded with ${sender.firstName} ${sender.lastName}`,
+      message: `You are now connected with ${sender.firstName} ${sender.lastName}`,
       timestamp: new Date().toISOString()
     };
 
     if (senderSocketId) io.to(senderSocketId).emit("system-message", messageForSender);
     if (receiverSocketId) io.to(receiverSocketId).emit("system-message", messageForReceiver);
+
     console.log("✅ System messages sent to both users");
+
     res.status(200).json({ message: 'Request accepted' });
   } catch (error) {
-    console.error("Accept request error:", error);
+    console.error("❌ Accept request error:", error);
     res.status(500).json({ error: 'Server error accepting request' });
   }
 });
 
-// POST /api/messages/delete-multiple
+
+
 router.post("/delete-multiple", async (req, res) => {
   const { ids, userId, forEveryone } = req.body;
   const io = req.app.get("io"); // ✅ Get io instance
@@ -312,6 +380,9 @@ router.post("/delete-multiple", async (req, res) => {
     res.status(500).json({ error: "Failed to delete messages" });
   }
 });
+
+
+
 
 
 
