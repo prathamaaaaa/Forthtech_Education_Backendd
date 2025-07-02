@@ -96,6 +96,7 @@ router.get('/:userId/contacts-with-last-message', async (req, res) => {
   }
 });
 
+
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
@@ -110,8 +111,6 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-
 // PATCH /api/users/:id/request
 router.patch('/:id/request', async (req, res) => {
   const fromId = req.params.id; // current user
@@ -157,6 +156,7 @@ router.patch('/:id/request', async (req, res) => {
 //         res.status(500).json({ error: err.message });
 //     }
 // });
+
 
 
 
