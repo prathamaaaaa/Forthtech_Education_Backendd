@@ -41,7 +41,7 @@ router.post('/', upload.single('file'), (req, res) => {
   uploadStream.end(req.file.buffer);
 
   uploadStream.on('finish', () => {
-    const fileUrl = `${process.env.BASE_URL || 'http://localhost:5000'}/api/upload/${uploadStream.id}`;
+    const fileUrl = `${process.env.BASE_URL || 'https://forthtecheducationbackendd-production.up.railway.app/'}/api/upload/${uploadStream.id}`;
     res.json({
       fileUrl,
       fileType: req.file.mimetype,
