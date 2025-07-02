@@ -41,7 +41,7 @@ router.post('/', upload.single('file'), (req, res) => {
   uploadStream.end(req.file.buffer);
 
   uploadStream.on('finish', () => {
-    const fileUrl = `${'https://forthtecheducationbackendd-production.up.railway.app/'}/api/upload/${uploadStream.id}`;
+    const fileUrl = `${'https://forthtecheducationbackendd-production.up.railway.app/'}api/upload/${uploadStream.id}`;
     res.json({
       fileUrl,
       fileType: req.file.mimetype,
