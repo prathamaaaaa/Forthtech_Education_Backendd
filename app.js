@@ -34,6 +34,9 @@ mongoose.connect(process.env.MONGO_URI, {
 }).catch(err => {
   console.error('❌ MongoDB Connection Failed:', err);
 });
+app.get("/", (req, res) => {
+  res.send("Backend working with WebSocket support");
+});
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
