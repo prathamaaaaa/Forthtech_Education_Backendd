@@ -58,11 +58,14 @@ router.get('/:userId/contacts-with-last-message', async (req, res) => {
 
     // get follow list
     const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const followIds = user.followList || [];
 
     const contacts = await Promise.all(
       followIds.map(async (followId) => {
-        // find last private message between these two
         const lastMsg = await PrivateMessage.findOne({
           $or: [
             { senderId: userId, receiverId: followId.toString() },
@@ -70,13 +73,12 @@ router.get('/:userId/contacts-with-last-message', async (req, res) => {
           ]
         }).sort({ timestamp: -1 });
 
-        // get user info
         const followedUser = await User.findById(followId).lean();
         return {
-          id: followedUser._id,
-          firstName: followedUser.firstName,
-          lastName: followedUser.lastName,
-          email: followedUser.email,
+          id: followedUser?._id,
+          firstName: followedUser?.firstName,
+          lastName: followedUser?.lastName,
+          email: followedUser?.email,
           lastMessage: lastMsg
             ? {
                 message: lastMsg.message,
@@ -93,6 +95,7 @@ router.get('/:userId/contacts-with-last-message', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 
 // PATCH /api/users/:id/request
@@ -131,15 +134,32 @@ router.patch('/:id/request', async (req, res) => {
 
 
 // 🔹 Read Single User
+// router.get('/:id', async (req, res) => {
+//     try {
+//         const user = await User.findById(req.params.id);
+//         if (!user) return res.status(404).json({ error: 'User not found' });
+//         res.json(user);
+//     } catch (err) {
+//         res.status(500).json({ error: err.message });
+//     }
+// });
+
+
 router.get('/:id', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-        res.json(user);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const user = await User.findById(req.params.id)
+      .populate('requestList.user', 'firstName lastName email') // add this
+      .populate('followList', 'firstName lastName email');      // optional
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
 
 // 🔹 Update User
 router.put('/:id', async (req, res) => {

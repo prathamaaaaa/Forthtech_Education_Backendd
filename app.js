@@ -6,6 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const handleSocketConnection = require('./routes/socketHandler'); 
 const notificationRoutes = require('./routes/notificationRoutes'); 
+
 dotenv.config();
 
 const app = express();
