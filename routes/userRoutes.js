@@ -96,6 +96,20 @@ router.get('/:userId/contacts-with-last-message', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .populate('requestList.user', 'firstName lastName email') // add this
+      .populate('followList', 'firstName lastName email');      // optional
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (err) {
+    console.error("Error fetching user:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 // PATCH /api/users/:id/request
@@ -145,20 +159,6 @@ router.patch('/:id/request', async (req, res) => {
 // });
 
 
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .populate('requestList.user', 'firstName lastName email') // add this
-      .populate('followList', 'firstName lastName email');      // optional
-
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    res.json(user);
-  } catch (err) {
-    console.error("Error fetching user:", err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
 
 
 // 🔹 Update User
