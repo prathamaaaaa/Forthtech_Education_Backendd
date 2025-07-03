@@ -91,12 +91,14 @@ router.post('/create', async (req, res) => {
 
 const visibleTo = members.filter(id => id !== creatorId);
 
+const creator = await User.findById(creatorId);
+const creatorName = creator ? `${creator.firstName} ${creator.lastName}` : 'Someone';
 
     const now = new Date();
 
     await Notification.create({
       title: 'New Group Created',
-      description: `You've been added to the group "${name}"`,
+  description: `${creatorName} created the group "${name}". You've been added.`,
       date: now.toISOString().split('T')[0],
       time: now.toTimeString().split(' ')[0],
       server: 'Group System',
@@ -140,6 +142,8 @@ router.post('/:groupId/add-members', async (req, res) => {
 
     group.members.push(...newObjectIds);
     group.memberAvatars.push(...newUserIds.map(() => 'https://github.com/shadcn.png'));
+const newUsers = await User.find({ _id: { $in: newUserIds } });
+const newNames = newUsers.map(u => `${u.firstName} ${u.lastName}`).join(', ') || 'Some members';
 
     await group.save();
 
@@ -148,13 +152,15 @@ router.post('/:groupId/add-members', async (req, res) => {
     if (newUserIds.length > 0) {
       await Notification.create({
         title: 'Added to Group',
-        description: `You've been added to the group "${group.name}"`,
+         description: `${newNames} have joined your group "${group.name}"`,
         date: now.toISOString().split('T')[0],
         time: now.toTimeString().split(' ')[0],
         server: 'Group System',
         visibleTo: newUserIds,
         isReadBy: []
       });
+const newMember = await User.findById(userId);
+const newMemberName = newMember ? `${newMember.firstName} ${newMember.lastName}` : 'Someone';
 
       const notifyOthers = [
         group.creator.toString(),
@@ -164,8 +170,8 @@ router.post('/:groupId/add-members', async (req, res) => {
       if (notifyOthers.length > 0) {
         await Notification.create({
           title: 'New Members Added',
-          description: `New members have joined your group "${group.name}"`,
-          date: now.toISOString().split('T')[0],
+  description: `${newMemberName} has joined your group "${group.name}"`,
+            date: now.toISOString().split('T')[0],
           time: now.toTimeString().split(' ')[0],
           server: 'Group System',
           visibleTo: notifyOthers,
@@ -250,12 +256,14 @@ router.post('/:groupId/accept-request', async (req, res) => {
     await group.save();
 
     const now = new Date();
+const newMember = await User.findById(userId);
+const newMemberName = newMember ? `${newMember.firstName} ${newMember.lastName}` : 'Someone';
 
     // 🔔 Notify members & creator
     if (notifyUsers.length > 0) {
       await Notification.create({
         title: 'New Member Joined',
-        description: `A new member has joined your group "${group.name}"`,
+        description: `${newMemberName} has joined your group "${group.name}"`,
         date: now.toISOString().split('T')[0],
         time: now.toTimeString().split(' ')[0],
         server: 'Group System',
@@ -308,12 +316,14 @@ router.post('/:groupId/join', async (req, res) => {
 
   group.joinRequests.push(userId);
   await group.save();
+const newMember = await User.findById(userId);
+const newMemberName = newMember ? `${newMember.firstName} ${newMember.lastName}` : 'Someone';
 
   // 🔔 Notify the group creator only
   const now = new Date();
   await Notification.create({
     title: 'New Join Request',
-    description: `A user has requested to join your group "${group.name}"`,
+description: `${newMemberName} has joined your group "${group.name}"`,
     date: now.toISOString().split('T')[0],
     time: now.toTimeString().split(' ')[0],
     server: 'Group System',
@@ -335,13 +345,15 @@ router.post('/:groupId/join', async (req, res) => {
       group.memberAvatars.push('https://github.com/shadcn.png');
 
       await group.save();
+      const newMember = await User.findById(userId);
+const newMemberName = newMember ? `${newMember.firstName} ${newMember.lastName}` : 'Someone';
 
       // Notify all others
       if (notifyUsers.length > 0) {
         const now = new Date();
         await Notification.create({
           title: 'New Member Joined',
-          description: `A new member has joined your group "${group.name}"`,
+         description: `${newMemberName} has joined your group "${group.name}"`,
           date: now.toISOString().split('T')[0],
           time: now.toTimeString().split(' ')[0],
           server: 'Group System',
