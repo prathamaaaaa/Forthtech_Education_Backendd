@@ -3,7 +3,7 @@ const router = express.Router();
 const Group = require('../models/Group'); // Ensure this path is correct
 const Notification = require('../models/Notification')
 const mongoose = require('mongoose');
-const User = require('../models/User');
+const User = require('../models/userModel');
 router.get('/', async (req, res) => {
   const { userId } = req.query;
 
