@@ -386,7 +386,25 @@ console.log("leave")
     group.members = group.members.filter(memberId => memberId && memberId.toString() !== userId);
 
     await group.save();
+    
+  const notifyUsers = [
+      group.creator.toString(),
+      ...group.members.map(m => m.toString())
+    ].filter(uid => uid !== userId);  // avoid notifying the one who left
+const userWhoLeft = await User.findById(userId);
 
+    if (notifyUsers.length > 0) {
+      const now = new Date();
+      await Notification.create({
+        title: 'Member Left Group',
+        description: `${userWhoLeft.firstName} ${userWhoLeft.lastName} left your group "${group.name}"`,
+        date: now.toISOString().split('T')[0],
+        time: now.toTimeString().split(' ')[0],
+        server: 'Group System',
+        visibleTo: notifyUsers,
+        isReadBy: []
+      });
+    }
     return res.status(200).json({
       message: 'Successfully left the group',
       group
